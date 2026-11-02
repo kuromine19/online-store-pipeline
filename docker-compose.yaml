@@ -1,5 +1,6 @@
 # Local demo: Airflow 3 (standalone mode) + PostgreSQL for both Airflow metadata and the warehouse.
-# Start:  docker compose up -d      UI: http://localhost:8080 (no login, local demo only)
+# Start:  docker compose up -d      UI: http://localhost:8090 (no login, local demo only)
+# Ports can be changed in .env (AIRFLOW_PORT, WAREHOUSE_PORT).
 services:
   postgres:
     image: postgres:16
@@ -11,11 +12,27 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init-warehouse.sql:/docker-entrypoint-initdb.d/init-warehouse.sql:ro
     ports:
-      - "5433:5432"   # query the warehouse from your machine on port 5433
+      - "${WAREHOUSE_PORT:-5433}:5432"   # query the warehouse from your machine
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U airflow"]
       interval: 5s
       retries: 20
+
+  # One-off step: makes the folders Airflow writes to writable by the Airflow user,
+  # whatever user owns the project folder on your machine.
+  fix-permissions:
+    image: apache/airflow:3.3.2
+    user: "0:0"
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -p /opt/airflow/data/landing /opt/airflow/docs/data
+        chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/data
+        chmod 777 /opt/airflow/docs/data
+    volumes:
+      - landing:/opt/airflow/data
+      - ./docs/data:/opt/airflow/docs/data
 
   airflow:
     image: apache/airflow:3.3.2
@@ -24,6 +41,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      fix-permissions:
+        condition: service_completed_successfully
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
@@ -36,10 +55,11 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./include:/opt/airflow/include
-      - ./data:/opt/airflow/data
-      - ./docs/data:/opt/airflow/docs/data
+      - landing:/opt/airflow/data            # synthetic source files, kept inside Docker
+      - ./docs/data:/opt/airflow/docs/data   # dashboard JSON, written back to the repo
     ports:
-      - "${AIRFLOW_PORT:-8090}:8080"
+      - "${AIRFLOW_PORT:-8090}:8080"   # Airflow listens on 8080 inside the container
 
 volumes:
   pgdata:
+  landing:
