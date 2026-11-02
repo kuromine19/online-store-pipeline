@@ -52,6 +52,7 @@ services:
       # Without them each component generates its own key and tasks fail with "Invalid auth token".
       AIRFLOW__API_AUTH__JWT_SECRET: "${AIRFLOW_JWT_SECRET:-local-demo-jwt-secret-change-me-0123456789abcdefghijklmnopqrstuvwxyz}"
       AIRFLOW__API__SECRET_KEY: "${AIRFLOW_API_SECRET_KEY:-local-demo-api-secret-change-me-0123456789abcdefghijklmnopqrstuvwxyz}"
+      AIRFLOW__API_AUTH__JWT_LEEWAY: "120"
       PYTHONPATH: /opt/airflow
       WAREHOUSE_URL: postgresql+psycopg2://warehouse:warehouse@postgres:5432/warehouse
       LANDING_DIR: /opt/airflow/data/landing
