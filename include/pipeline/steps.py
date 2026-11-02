@@ -155,7 +155,10 @@ QUALITY_CHECKS = [
      "SELECT count(*) FROM core.fact_order_items i JOIN core.fact_orders o USING (order_id) "
      "WHERE o.order_date = :d AND (i.quantity <= 0 OR i.unit_price < 0)"),
     ("no_future_orders", "blocking",
-     "SELECT count(*) FROM core.fact_orders WHERE order_date > :d"),
+     # Only orders loaded by this run (still in staging), so runs for earlier days
+     # are not failed by orders that later runs have already loaded.
+     "SELECT count(*) FROM core.fact_orders o JOIN stg.fact_orders s USING (order_id) "
+     "WHERE o.order_date > :d"),
     ("customers_have_email", "warning",
      "SELECT count(*) FROM core.dim_customer WHERE email IS NULL"),
     ("daily_volume_in_range", "warning",

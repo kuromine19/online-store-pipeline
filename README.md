@@ -74,8 +74,11 @@ Load a range of days with an Airflow 3 backfill:
 
 ```bash
 docker compose exec airflow airflow backfill create --dag-id store_dwh_daily \
-  --from-date 2026-09-16 --to-date 2026-10-17
+  --from-date 2026-09-16 --to-date 2026-10-17 --max-active-runs 1
 ```
+
+Runs share the staging tables, so they must run one at a time (`max_active_runs=1` in the DAG,
+`--max-active-runs 1` for backfills).
 
 The login screen is disabled in `docker-compose.yaml` for convenience. This is for local use only.
 
@@ -87,8 +90,12 @@ to a mounted folder. The `fix-permissions` service handles this on start; recrea
 
 ```bash
 docker compose exec airflow airflow backfill create --dag-id store_dwh_daily \
-  --from-date 2026-10-20 --to-date 2026-11-01 --reprocess-behavior failed
+  --from-date 2026-10-20 --to-date 2026-11-01 --reprocess-behavior failed --max-active-runs 1
 ```
+
+`API_SERVER_ERROR: 403 Invalid auth token` means the Airflow components were signing task tokens with
+different keys. `docker-compose.yaml` sets `AIRFLOW__API_AUTH__JWT_SECRET` to prevent this; if you see the
+error, make sure you are on the latest `docker-compose.yaml` and run `docker compose up -d --force-recreate`.
 
 ## Run without Airflow
 
