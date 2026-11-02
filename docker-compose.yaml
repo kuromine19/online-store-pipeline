@@ -1,0 +1,45 @@
+# Local demo: Airflow 3 (standalone mode) + PostgreSQL for both Airflow metadata and the warehouse.
+# Start:  docker compose up -d      UI: http://localhost:8080 (no login, local demo only)
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-warehouse.sql:/docker-entrypoint-initdb.d/init-warehouse.sql:ro
+    ports:
+      - "5433:5432"   # query the warehouse from your machine on port 5433
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      retries: 20
+
+  airflow:
+    image: apache/airflow:3.3.2
+    command: standalone
+    user: "${AIRFLOW_UID:-50000}:0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      # Local demo only: disables the login screen. Never use this on a shared server.
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "True"
+      PYTHONPATH: /opt/airflow
+      WAREHOUSE_URL: postgresql+psycopg2://warehouse:warehouse@postgres:5432/warehouse
+      LANDING_DIR: /opt/airflow/data/landing
+      SITE_DATA_DIR: /opt/airflow/docs/data
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./include:/opt/airflow/include
+      - ./data:/opt/airflow/data
+      - ./docs/data:/opt/airflow/docs/data
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

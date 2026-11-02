@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Online store data pipeline | Airflow 3, Python, PostgreSQL</title>
+<meta name="description" content="Demo data warehouse pipeline built with Apache Airflow 3, Python and PostgreSQL. Synthetic data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#172540;--text:#2A3446;--muted:#667388;--line:#DDE3EA;--wash:#F3F5F8;--teal:#1F9E8D;--amber:#E9A92E;--rose:#DB5A84;--bg:#FFFFFF}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Archivo,"Helvetica Neue",Arial,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;font-size:16px}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+header{background:var(--ink);color:#fff;padding:64px 0 0;overflow:hidden}
+header h1{font-weight:800;font-size:clamp(34px,6vw,56px);line-height:1.05;letter-spacing:-.5px;max-width:720px}
+header p{color:#B9C6D8;font-size:19px;max-width:620px;margin-top:18px}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{display:inline-block;padding:11px 18px;border-radius:6px;font-weight:600;font-size:15px;text-decoration:none}
+.btn.primary{background:#fff;color:var(--ink)}
+.btn.ghost{border:1.5px solid #5D6E8C;color:#fff}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+header svg{display:block;width:100%;height:auto;margin-top:40px}
+section{padding:56px 0 8px}
+h2{font-weight:800;font-size:26px;color:var(--ink);letter-spacing:-.2px}
+.lede{color:var(--muted);margin-top:6px;max-width:640px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);margin-top:24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.kpi{padding:18px 18px 18px 0}
+.kpi+.kpi{padding-left:18px;border-left:1px solid var(--line)}
+.kpi b{display:block;font-weight:800;font-size:28px;color:var(--ink);font-variant-numeric:tabular-nums}
+.kpi span{font-size:14px;color:var(--muted)}
+.chart{margin-top:20px;width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:620px;height:auto}
+.bars{margin-top:20px;display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:170px 1fr 110px;align-items:center;gap:14px;font-size:15px}
+.bar i{display:block;height:14px;background:var(--teal);border-radius:2px}
+.bar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.tbl{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-weight:600;color:var(--ink);background:var(--wash);padding:9px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.ok{color:var(--teal);font-weight:600}.warn{color:#B07A12;font-weight:600}.bad{color:var(--rose);font-weight:600}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;color:var(--ink)}
+.flow{margin-top:20px;overflow-x:auto}
+.flow svg{min-width:760px;width:100%;height:auto;display:block}
+ul.points{margin:16px 0 0 20px;max-width:720px}
+ul.points li{margin-bottom:8px}
+footer{margin-top:64px;padding:28px 0 40px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+@media (max-width:760px){.kpis{grid-template-columns:1fr 1fr}.kpi:nth-child(3){padding-left:0;border-left:0}.grid2{grid-template-columns:1fr}.bar{grid-template-columns:120px 1fr 90px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="wrap">
+  <h1>Online store data pipeline</h1>
+  <p>A working demo of a daily warehouse load, built with Apache Airflow 3, Python and PostgreSQL. Every number on this page was produced by the pipeline from synthetic data.</p>
+  <div class="actions">
+   <a class="btn primary" id="repo-link" href="#">View the code on GitHub</a>
+   <a class="btn ghost" href="handover.pdf">Read the handover document</a>
+  </div>
+ </div>
+ <svg viewBox="0 0 1200 172" aria-hidden="true">
+  <g fill="none" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+   <path d="M60 30 H330 L400 75 H1140" stroke="#1F9E8D"/>
+   <path d="M60 89 H1140" stroke="#E9A92E"/>
+   <path d="M60 148 H330 L400 103 H1140" stroke="#DB5A84"/>
+  </g>
+  <g fill="#fff" stroke="#172540" stroke-width="4"><circle cx="60" cy="30" r="10"/><circle cx="60" cy="89" r="10"/><circle cx="60" cy="148" r="10"/></g>
+  <rect x="560" y="60" width="26" height="58" rx="13" fill="#fff" stroke="#172540" stroke-width="4"/>
+  <rect x="1128" y="56" width="30" height="66" rx="15" fill="#fff" stroke="#172540" stroke-width="4"/>
+ </svg>
+</header>
+
+<main class="wrap">
+ <section>
+  <h2>Latest business day</h2>
+  <p class="lede" id="latest-label">Loading…</p>
+  <div class="kpis">
+   <div class="kpi"><b id="k-rev">–</b><span>Revenue</span></div>
+   <div class="kpi"><b id="k-orders">–</b><span>Orders</span></div>
+   <div class="kpi"><b id="k-aov">–</b><span>Average order value</span></div>
+   <div class="kpi"><b id="k-rej">–</b><span>Rows rejected by quality rules</span></div>
+  </div>
+ </section>
+
+ <section>
+  <h2>Daily revenue</h2>
+  <p class="lede">Completed, delivered and shipped orders. Weekends run higher by design of the synthetic data.</p>
+  <div class="chart" id="chart"></div>
+ </section>
+
+ <section>
+  <h2>Revenue by category</h2>
+  <p class="lede">All days in the warehouse.</p>
+  <div class="bars" id="bars"></div>
+ </section>
+
+ <section>
+  <h2>What happened in the last run</h2>
+  <p class="lede">Read straight from the pipeline’s audit tables.</p>
+  <div class="tbl"><table id="t-load"><thead><tr><th>Table</th><th class="n">Extracted</th><th class="n">Rejected</th><th class="n">Loaded</th></tr></thead><tbody></tbody></table></div>
+  <div class="grid2">
+   <div class="tbl"><table id="t-checks"><thead><tr><th>Quality check</th><th>Severity</th><th>Result</th></tr></thead><tbody></tbody></table></div>
+   <div class="tbl"><table id="t-rej"><thead><tr><th>Why rows were rejected</th><th class="n">Rows</th></tr></thead><tbody></tbody></table></div>
+  </div>
+ </section>
+
+ <section>
+  <h2>How the pipeline works</h2>
+  <p class="lede">One Airflow DAG, <code>store_dwh_daily</code>, runs every night. Each table is a task group that extracts and cleans its source file into staging, then upserts it into the core schema. Tables load in waves so that facts never arrive before the dimensions they reference.</p>
+  <div class="flow">
+   <svg viewBox="0 0 1000 170" role="img" aria-label="Pipeline flow from source files through four load waves to quality checks, marts and this page">
+    <g font-family="Archivo, Arial, sans-serif" font-size="14" fill="#2A3446">
+     <g fill="none" stroke="#C5CEDA" stroke-width="2"><path d="M110 85 H140"/><path d="M270 85 H300"/><path d="M430 85 H460"/><path d="M590 85 H620"/><path d="M750 85 H780"/></g>
+     <rect x="10" y="50" width="100" height="70" rx="6" fill="#F3F5F8"/><text x="60" y="80" text-anchor="middle" font-weight="600">Source</text><text x="60" y="99" text-anchor="middle">CSV files</text>
+     <rect x="140" y="30" width="130" height="110" rx="6" fill="#E6F4F1"/><text x="205" y="58" text-anchor="middle" font-weight="600">Wave 1</text><text x="205" y="82" text-anchor="middle">categories</text><text x="205" y="101" text-anchor="middle">payment methods</text><text x="205" y="120" text-anchor="middle">customers</text>
+     <rect x="300" y="50" width="130" height="70" rx="6" fill="#E6F4F1"/><text x="365" y="80" text-anchor="middle" font-weight="600">Wave 2</text><text x="365" y="99" text-anchor="middle">products</text>
+     <rect x="460" y="50" width="130" height="70" rx="6" fill="#FBF0DB"/><text x="525" y="80" text-anchor="middle" font-weight="600">Wave 3</text><text x="525" y="99" text-anchor="middle">orders</text>
+     <rect x="620" y="50" width="130" height="70" rx="6" fill="#FBF0DB"/><text x="685" y="80" text-anchor="middle" font-weight="600">Wave 4</text><text x="685" y="99" text-anchor="middle">order items</text>
+     <rect x="780" y="30" width="210" height="110" rx="6" fill="#F3F5F8"/><text x="885" y="62" text-anchor="middle" font-weight="600">Quality checks</text><text x="885" y="86" text-anchor="middle">Reporting marts</text><text x="885" y="110" text-anchor="middle">This page</text>
+    </g>
+   </svg>
+  </div>
+  <ul class="points">
+   <li><strong>Safe to rerun.</strong> Every load is an upsert, so reprocessing a day never creates duplicates.</li>
+   <li><strong>Bad rows are kept, not lost.</strong> Rejected rows go to <code>audit.rejected_rows</code> with the reason.</li>
+   <li><strong>Checks with consequences.</strong> Blocking checks stop the run before reports are rebuilt; warnings are recorded.</li>
+   <li><strong>Tested.</strong> Cleaning rules have unit tests, and CI runs the whole pipeline against a real PostgreSQL on every push.</li>
+  </ul>
+ </section>
+</main>
+
+<footer><div class="wrap" id="foot">All data on this page is synthetic.</div></footer>
+
+<script>
+const fmt = (n, d = 0) => n.toLocaleString("en-US", {minimumFractionDigits: d, maximumFractionDigits: d});
+const money = n => "$" + fmt(n, 0);
+
+// Link to the repository: https://<user>.github.io/<repo>/ -> https://github.com/<user>/<repo>
+(function () {
+  const a = document.getElementById("repo-link");
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+  const repo = location.pathname.split("/").filter(Boolean)[0];
+  if (m && repo) a.href = `https://github.com/${m[1]}/${repo}`;
+  else a.href = "https://github.com/";
+})();
+
+function lineChart(el, rows) {
+  const W = 1000, H = 300, L = 70, R = 20, T = 20, B = 40;
+  const vals = rows.map(r => r.revenue);
+  const max = Math.ceil(Math.max(...vals) / 20000) * 20000, min = 0;
+  const x = i => L + i * (W - L - R) / (rows.length - 1);
+  const y = v => T + (H - T - B) * (1 - (v - min) / (max - min));
+  let g = "";
+  for (let v = 0; v <= max; v += 20000) {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#E4E9EF"/>`;
+    g += `<text x="${L - 10}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#667388">$${v / 1000}k</text>`;
+  }
+  rows.forEach((r, i) => {
+    if (i % 7 === 0 || i === rows.length - 1) {
+      const d = new Date(r.date + "T00:00:00Z");
+      g += `<text x="${x(i)}" y="${H - 14}" text-anchor="middle" font-size="12" fill="#667388">${d.toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "UTC"})}</text>`;
+    }
+  });
+  const pts = rows.map((r, i) => `${x(i)},${y(r.revenue)}`).join(" ");
+  const area = `${L},${y(0)} ${pts} ${x(rows.length - 1)},${y(0)}`;
+  const last = rows.length - 1;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily revenue line chart">${g}
+    <polygon points="${area}" fill="#1F9E8D" opacity=".08"/>
+    <polyline points="${pts}" fill="none" stroke="#1F9E8D" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="${x(last)}" cy="${y(rows[last].revenue)}" r="5" fill="#fff" stroke="#172540" stroke-width="3"/></svg>`;
+}
+
+fetch("data/dashboard.json").then(r => r.json()).then(d => {
+  const days = d.daily_sales, last = days[days.length - 1];
+  const run = d.last_run;
+  const rejected = run.load_stats.reduce((s, t) => s + t.rejected, 0);
+  const dt = new Date(last.date + "T00:00:00Z").toLocaleDateString("en-US", {weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC"});
+  document.getElementById("latest-label").textContent = `${dt}, the most recent day processed.`;
+  document.getElementById("k-rev").textContent = money(last.revenue);
+  document.getElementById("k-orders").textContent = fmt(last.orders);
+  document.getElementById("k-aov").textContent = "$" + fmt(last.aov, 2);
+  document.getElementById("k-rej").textContent = fmt(rejected);
+  lineChart(document.getElementById("chart"), days);
+
+  const top = d.category_sales[0].revenue;
+  document.getElementById("bars").innerHTML = d.category_sales.map(c =>
+    `<div class="bar"><span>${c.category}</span><i style="width:${(c.revenue / top * 100).toFixed(1)}%"></i><em>${money(c.revenue)}</em></div>`).join("");
+
+  document.querySelector("#t-load tbody").innerHTML = run.load_stats.map(t =>
+    `<tr><td><code>${t.table}</code></td><td class="n">${fmt(t.extracted)}</td><td class="n">${fmt(t.rejected)}</td><td class="n">${fmt(t.loaded)}</td></tr>`).join("");
+  document.querySelector("#t-checks tbody").innerHTML = run.quality_checks.map(c => {
+    const cls = c.passed ? "ok" : (c.severity === "blocking" ? "bad" : "warn");
+    const res = c.passed ? "Passed" : `${fmt(c.failed_rows)} flagged`;
+    return `<tr><td><code>${c.check}</code></td><td>${c.severity}</td><td class="${cls}">${res}</td></tr>`;
+  }).join("");
+  document.querySelector("#t-rej tbody").innerHTML = run.rejections.map(r =>
+    `<tr><td>${r.reason} <span style="color:#667388">(${r.table})</span></td><td class="n">${fmt(r.rows)}</td></tr>`).join("");
+  document.getElementById("foot").textContent =
+    `All data on this page is synthetic. Generated by the export_site_data task for ${last.date}.`;
+}).catch(() => {
+  document.getElementById("latest-label").textContent = "Dashboard data could not be loaded. Run the pipeline to create docs/data/dashboard.json.";
+});
+</script>
+</body>
+</html>

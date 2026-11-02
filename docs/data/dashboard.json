@@ -1,0 +1,372 @@
+{
+  "generated_for": "2026-10-16",
+  "daily_sales": [
+    {
+      "date": "2026-09-15",
+      "orders": 327,
+      "items": 682,
+      "revenue": 59725.59,
+      "aov": 182.65
+    },
+    {
+      "date": "2026-09-16",
+      "orders": 427,
+      "items": 882,
+      "revenue": 81730.54,
+      "aov": 191.41
+    },
+    {
+      "date": "2026-09-17",
+      "orders": 376,
+      "items": 773,
+      "revenue": 70987.59,
+      "aov": 188.8
+    },
+    {
+      "date": "2026-09-18",
+      "orders": 434,
+      "items": 928,
+      "revenue": 85834.82,
+      "aov": 197.78
+    },
+    {
+      "date": "2026-09-19",
+      "orders": 523,
+      "items": 1051,
+      "revenue": 97297.94,
+      "aov": 186.04
+    },
+    {
+      "date": "2026-09-20",
+      "orders": 451,
+      "items": 933,
+      "revenue": 82062.83,
+      "aov": 181.96
+    },
+    {
+      "date": "2026-09-21",
+      "orders": 454,
+      "items": 928,
+      "revenue": 85066.74,
+      "aov": 187.37
+    },
+    {
+      "date": "2026-09-22",
+      "orders": 424,
+      "items": 867,
+      "revenue": 80320.95,
+      "aov": 189.44
+    },
+    {
+      "date": "2026-09-23",
+      "orders": 442,
+      "items": 880,
+      "revenue": 77564.29,
+      "aov": 175.48
+    },
+    {
+      "date": "2026-09-24",
+      "orders": 352,
+      "items": 747,
+      "revenue": 68887.1,
+      "aov": 195.7
+    },
+    {
+      "date": "2026-09-25",
+      "orders": 330,
+      "items": 688,
+      "revenue": 62341.71,
+      "aov": 188.91
+    },
+    {
+      "date": "2026-09-26",
+      "orders": 470,
+      "items": 1003,
+      "revenue": 88986.13,
+      "aov": 189.33
+    },
+    {
+      "date": "2026-09-27",
+      "orders": 481,
+      "items": 955,
+      "revenue": 85317.43,
+      "aov": 177.38
+    },
+    {
+      "date": "2026-09-28",
+      "orders": 416,
+      "items": 885,
+      "revenue": 82636.39,
+      "aov": 198.65
+    },
+    {
+      "date": "2026-09-29",
+      "orders": 338,
+      "items": 689,
+      "revenue": 61995.66,
+      "aov": 183.42
+    },
+    {
+      "date": "2026-09-30",
+      "orders": 425,
+      "items": 911,
+      "revenue": 83895.76,
+      "aov": 197.4
+    },
+    {
+      "date": "2026-10-01",
+      "orders": 343,
+      "items": 691,
+      "revenue": 63741.48,
+      "aov": 185.84
+    },
+    {
+      "date": "2026-10-02",
+      "orders": 438,
+      "items": 943,
+      "revenue": 85444.05,
+      "aov": 195.08
+    },
+    {
+      "date": "2026-10-03",
+      "orders": 475,
+      "items": 949,
+      "revenue": 86310.04,
+      "aov": 181.71
+    },
+    {
+      "date": "2026-10-04",
+      "orders": 462,
+      "items": 966,
+      "revenue": 88996.37,
+      "aov": 192.63
+    },
+    {
+      "date": "2026-10-05",
+      "orders": 426,
+      "items": 900,
+      "revenue": 80553.56,
+      "aov": 189.09
+    },
+    {
+      "date": "2026-10-06",
+      "orders": 451,
+      "items": 918,
+      "revenue": 85864.36,
+      "aov": 190.39
+    },
+    {
+      "date": "2026-10-07",
+      "orders": 329,
+      "items": 652,
+      "revenue": 56025.79,
+      "aov": 170.29
+    },
+    {
+      "date": "2026-10-08",
+      "orders": 447,
+      "items": 952,
+      "revenue": 85510.68,
+      "aov": 191.3
+    },
+    {
+      "date": "2026-10-09",
+      "orders": 347,
+      "items": 764,
+      "revenue": 66111.95,
+      "aov": 190.52
+    },
+    {
+      "date": "2026-10-10",
+      "orders": 442,
+      "items": 870,
+      "revenue": 77502.75,
+      "aov": 175.35
+    },
+    {
+      "date": "2026-10-11",
+      "orders": 542,
+      "items": 1150,
+      "revenue": 107194.19,
+      "aov": 197.78
+    },
+    {
+      "date": "2026-10-12",
+      "orders": 328,
+      "items": 659,
+      "revenue": 58156.58,
+      "aov": 177.31
+    },
+    {
+      "date": "2026-10-13",
+      "orders": 340,
+      "items": 686,
+      "revenue": 62941.99,
+      "aov": 185.12
+    },
+    {
+      "date": "2026-10-14",
+      "orders": 425,
+      "items": 885,
+      "revenue": 79338.52,
+      "aov": 186.68
+    },
+    {
+      "date": "2026-10-15",
+      "orders": 403,
+      "items": 843,
+      "revenue": 76262.71,
+      "aov": 189.24
+    },
+    {
+      "date": "2026-10-16",
+      "orders": 366,
+      "items": 747,
+      "revenue": 67389.14,
+      "aov": 184.12
+    }
+  ],
+  "category_sales": [
+    {
+      "category": "Electronics",
+      "revenue": 408956.17
+    },
+    {
+      "category": "Home & Kitchen",
+      "revenue": 359618.41
+    },
+    {
+      "category": "Sports & Outdoors",
+      "revenue": 313788.95
+    },
+    {
+      "category": "Grocery",
+      "revenue": 306405.43
+    },
+    {
+      "category": "Toys & Games",
+      "revenue": 280356.86
+    },
+    {
+      "category": "Books",
+      "revenue": 275327.92
+    },
+    {
+      "category": "Fashion",
+      "revenue": 273912.82
+    },
+    {
+      "category": "Beauty",
+      "revenue": 263629.07
+    }
+  ],
+  "last_run": {
+    "load_stats": [
+      {
+        "table": "dim_category",
+        "extracted": 8,
+        "rejected": 0,
+        "loaded": 8
+      },
+      {
+        "table": "dim_customer",
+        "extracted": 1509,
+        "rejected": 1,
+        "loaded": 1500
+      },
+      {
+        "table": "dim_payment_method",
+        "extracted": 4,
+        "rejected": 0,
+        "loaded": 4
+      },
+      {
+        "table": "dim_product",
+        "extracted": 202,
+        "rejected": 2,
+        "loaded": 200
+      },
+      {
+        "table": "fact_order_items",
+        "extracted": 724,
+        "rejected": 17,
+        "loaded": 707
+      },
+      {
+        "table": "fact_orders",
+        "extracted": 443,
+        "rejected": 7,
+        "loaded": 431
+      }
+    ],
+    "quality_checks": [
+      {
+        "check": "customers_have_email",
+        "severity": "warning",
+        "failed_rows": 3,
+        "passed": false
+      },
+      {
+        "check": "daily_volume_in_range",
+        "severity": "warning",
+        "failed_rows": 0,
+        "passed": true
+      },
+      {
+        "check": "no_future_orders",
+        "severity": "blocking",
+        "failed_rows": 0,
+        "passed": true
+      },
+      {
+        "check": "no_negative_amounts",
+        "severity": "blocking",
+        "failed_rows": 0,
+        "passed": true
+      },
+      {
+        "check": "orders_have_items",
+        "severity": "warning",
+        "failed_rows": 1,
+        "passed": false
+      }
+    ],
+    "rejections": [
+      {
+        "table": "fact_order_items",
+        "reason": "order or product not loaded",
+        "rows": 11
+      },
+      {
+        "table": "fact_order_items",
+        "reason": "quantity must be positive",
+        "rows": 6
+      },
+      {
+        "table": "fact_orders",
+        "reason": "order_ts after business date",
+        "rows": 4
+      },
+      {
+        "table": "fact_orders",
+        "reason": "missing payment_method_code",
+        "rows": 3
+      },
+      {
+        "table": "dim_product",
+        "reason": "invalid unit_price",
+        "rows": 1
+      },
+      {
+        "table": "dim_product",
+        "reason": "missing category_id",
+        "rows": 1
+      },
+      {
+        "table": "dim_customer",
+        "reason": "missing customer_id",
+        "rows": 1
+      }
+    ]
+  }
+}
