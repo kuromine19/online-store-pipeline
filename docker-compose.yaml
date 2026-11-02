@@ -29,7 +29,7 @@ services:
       - |
         mkdir -p /opt/airflow/data/landing /opt/airflow/docs/data
         chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/data
-        chmod 777 /opt/airflow/docs/data
+        chmod -R a+rwX /opt/airflow/docs/data
     volumes:
       - landing:/opt/airflow/data
       - ./docs/data:/opt/airflow/docs/data

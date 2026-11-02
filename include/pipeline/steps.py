@@ -1,6 +1,7 @@
 """Pipeline steps. Each function is called by one Airflow task and can also be run locally."""
 import csv
 import json
+import os
 from datetime import date
 from pathlib import Path
 
@@ -233,5 +234,9 @@ def export_site_data(business_date: date, out_dir: Path = SITE_DATA_DIR) -> Path
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     path = out / "dashboard.json"
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    # Write to a temporary file and swap it in. This is atomic, and it also works when the existing
+    # file belongs to another user (for example a file checked out on the host and mounted into Docker).
+    tmp = out / "dashboard.json.tmp"
+    tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    os.replace(tmp, path)
     return path
