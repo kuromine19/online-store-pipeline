@@ -39,7 +39,7 @@ services:
       - ./data:/opt/airflow/data
       - ./docs/data:/opt/airflow/docs/data
     ports:
-      - "8080:8080"
+      - "${AIRFLOW_PORT:-8090}:8080"
 
 volumes:
   pgdata:
