@@ -23,26 +23,27 @@ CLEANERS = {
     "fact_order_items": t.clean_order_items,
 }
 
-# Upsert from staging into core. Facts only load rows whose parents exist in core.
+# Upsert one business date from staging into core. Facts only load rows whose parents exist in core.
 UPSERTS = {
     "dim_category": """
         INSERT INTO core.dim_category (category_id, category_name)
-        SELECT category_id, category_name FROM stg.dim_category
+        SELECT category_id, category_name FROM stg.dim_category WHERE business_date = :d
         ON CONFLICT (category_id) DO UPDATE SET category_name = EXCLUDED.category_name, updated_at = now()""",
     "dim_payment_method": """
         INSERT INTO core.dim_payment_method (payment_method_code, payment_method_name)
-        SELECT payment_method_code, payment_method_name FROM stg.dim_payment_method
+        SELECT payment_method_code, payment_method_name FROM stg.dim_payment_method WHERE business_date = :d
         ON CONFLICT (payment_method_code) DO UPDATE
         SET payment_method_name = EXCLUDED.payment_method_name, updated_at = now()""",
     "dim_customer": """
         INSERT INTO core.dim_customer (customer_id, full_name, email, city, signup_date)
-        SELECT customer_id, full_name, email, city, signup_date FROM stg.dim_customer
+        SELECT customer_id, full_name, email, city, signup_date FROM stg.dim_customer WHERE business_date = :d
         ON CONFLICT (customer_id) DO UPDATE SET full_name = EXCLUDED.full_name, email = EXCLUDED.email,
             city = EXCLUDED.city, signup_date = EXCLUDED.signup_date, updated_at = now()""",
     "dim_product": """
         INSERT INTO core.dim_product (product_id, product_name, category_id, unit_price)
         SELECT s.product_id, s.product_name, s.category_id, s.unit_price
         FROM stg.dim_product s JOIN core.dim_category c USING (category_id)
+        WHERE s.business_date = :d
         ON CONFLICT (product_id) DO UPDATE SET product_name = EXCLUDED.product_name,
             category_id = EXCLUDED.category_id, unit_price = EXCLUDED.unit_price, updated_at = now()""",
     "fact_orders": """
@@ -51,6 +52,7 @@ UPSERTS = {
         FROM stg.fact_orders s
         JOIN core.dim_customer c USING (customer_id)
         JOIN core.dim_payment_method p USING (payment_method_code)
+        WHERE s.business_date = :d
         ON CONFLICT (order_id) DO UPDATE SET status = EXCLUDED.status, order_ts = EXCLUDED.order_ts,
             order_date = EXCLUDED.order_date, customer_id = EXCLUDED.customer_id,
             payment_method_code = EXCLUDED.payment_method_code, updated_at = now()""",
@@ -60,6 +62,7 @@ UPSERTS = {
         FROM stg.fact_order_items s
         JOIN core.fact_orders o USING (order_id)
         JOIN core.dim_product p USING (product_id)
+        WHERE s.business_date = :d
         ON CONFLICT (order_id, line_no) DO UPDATE SET product_id = EXCLUDED.product_id,
             quantity = EXCLUDED.quantity, unit_price = EXCLUDED.unit_price,
             line_amount = EXCLUDED.line_amount, updated_at = now()""",
@@ -69,17 +72,17 @@ UPSERTS = {
 ORPHANS = {
     "dim_product": ("unknown category_id",
                     "SELECT s.* FROM stg.dim_product s LEFT JOIN core.dim_category c USING (category_id) "
-                    "WHERE c.category_id IS NULL"),
+                    "WHERE s.business_date = :d AND c.category_id IS NULL"),
     "fact_orders": ("unknown customer or payment method",
                     "SELECT s.* FROM stg.fact_orders s "
                     "LEFT JOIN core.dim_customer c USING (customer_id) "
                     "LEFT JOIN core.dim_payment_method p USING (payment_method_code) "
-                    "WHERE c.customer_id IS NULL OR p.payment_method_code IS NULL"),
+                    "WHERE s.business_date = :d AND (c.customer_id IS NULL OR p.payment_method_code IS NULL)"),
     "fact_order_items": ("order or product not loaded",
                          "SELECT s.* FROM stg.fact_order_items s "
                          "LEFT JOIN core.fact_orders o USING (order_id) "
                          "LEFT JOIN core.dim_product p USING (product_id) "
-                         "WHERE o.order_id IS NULL OR p.product_id IS NULL"),
+                         "WHERE s.business_date = :d AND (o.order_id IS NULL OR p.product_id IS NULL)"),
 }
 
 
@@ -107,7 +110,7 @@ def _reject(conn, business_date: date, table: str, rows: list[tuple[str, dict]])
 
 
 def extract_to_stg(table: str, business_date: date) -> dict:
-    """Read the source file, apply cleaning rules, replace the staging table."""
+    """Read the source file, apply cleaning rules, replace this business date's rows in staging."""
     raw = _read_csv(LANDING_DIR / business_date.isoformat() / SOURCE_FILES[table])
     if table == "fact_orders":
         clean, rejected = t.clean_orders(raw, business_date)
@@ -117,12 +120,13 @@ def extract_to_stg(table: str, business_date: date) -> dict:
     with get_engine().begin() as conn:
         conn.execute(text(f"DELETE FROM audit.rejected_rows WHERE run_date = :d AND table_name = :t"),
                      {"d": business_date, "t": table})
-        conn.execute(text(f"TRUNCATE stg.{table}"))
+        conn.execute(text(f"DELETE FROM stg.{table} WHERE business_date = :d"), {"d": business_date})
         if clean:
-            cols = list(clean[0].keys())
+            rows = [{**r, "business_date": business_date} for r in clean]
+            cols = list(rows[0].keys())
             conn.execute(
                 text(f"INSERT INTO stg.{table} ({', '.join(cols)}) VALUES ({', '.join(':' + c for c in cols)})"),
-                clean,
+                rows,
             )
         _reject(conn, business_date, table, rejected)
     return {"extracted": len(raw), "rejected": len(rejected), "staged": len(clean)}
@@ -134,9 +138,9 @@ def load_to_core(table: str, business_date: date, extracted: int, rejected: int)
         orphan_rows = []
         if table in ORPHANS:
             reason, sql = ORPHANS[table]
-            orphan_rows = [(reason, dict(r._mapping)) for r in conn.execute(text(sql))]
+            orphan_rows = [(reason, dict(r._mapping)) for r in conn.execute(text(sql), {"d": business_date})]
             _reject(conn, business_date, table, orphan_rows)
-        loaded = conn.execute(text(UPSERTS[table])).rowcount
+        loaded = conn.execute(text(UPSERTS[table]), {"d": business_date}).rowcount
         conn.execute(
             text("INSERT INTO audit.load_stats (run_date, table_name, extracted, rejected, loaded) "
                  "VALUES (:d, :t, :e, :r, :l) ON CONFLICT (run_date, table_name) DO UPDATE "
@@ -156,10 +160,10 @@ QUALITY_CHECKS = [
      "SELECT count(*) FROM core.fact_order_items i JOIN core.fact_orders o USING (order_id) "
      "WHERE o.order_date = :d AND (i.quantity <= 0 OR i.unit_price < 0)"),
     ("no_future_orders", "blocking",
-     # Only orders loaded by this run (still in staging), so runs for earlier days
-     # are not failed by orders that later runs have already loaded.
+     # Only orders staged by this run's business date, so runs for other days
+     # (earlier, later or running at the same time) never affect the result.
      "SELECT count(*) FROM core.fact_orders o JOIN stg.fact_orders s USING (order_id) "
-     "WHERE o.order_date > :d"),
+     "WHERE s.business_date = :d AND o.order_date > :d"),
     ("customers_have_email", "warning",
      "SELECT count(*) FROM core.dim_customer WHERE email IS NULL"),
     ("daily_volume_in_range", "warning",

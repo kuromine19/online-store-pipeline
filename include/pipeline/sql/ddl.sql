@@ -12,6 +12,15 @@ CREATE TABLE IF NOT EXISTS stg.dim_product (product_id text, product_name text, 
 CREATE TABLE IF NOT EXISTS stg.fact_orders (order_id text, order_ts timestamp, customer_id text, payment_method_code text, status text);
 CREATE TABLE IF NOT EXISTS stg.fact_order_items (order_id text, line_no int, product_id text, quantity int, unit_price numeric(12,2));
 
+-- Every staged row is tagged with the business date of the run that staged it, so runs for
+-- different days never read each other's rows (safe for backfills and overlapping runs).
+ALTER TABLE stg.dim_category ADD COLUMN IF NOT EXISTS business_date date;
+ALTER TABLE stg.dim_payment_method ADD COLUMN IF NOT EXISTS business_date date;
+ALTER TABLE stg.dim_customer ADD COLUMN IF NOT EXISTS business_date date;
+ALTER TABLE stg.dim_product ADD COLUMN IF NOT EXISTS business_date date;
+ALTER TABLE stg.fact_orders ADD COLUMN IF NOT EXISTS business_date date;
+ALTER TABLE stg.fact_order_items ADD COLUMN IF NOT EXISTS business_date date;
+
 -- Core: conformed dimensions and facts (upserted)
 CREATE TABLE IF NOT EXISTS core.dim_category (
     category_id text PRIMARY KEY, category_name text NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
